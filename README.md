@@ -15,6 +15,21 @@ Modbus RTU Scanner is a diagnostic tool that helps you identify the correct comm
   - Parity: None, Odd, Even, Mark, Space
   - Stop Bits: One, OnePointFive, Two
   - Handshake: None, XOnXOff, RequestToSend, RequestToSendXOnXOff
+  - Modbus Functions: 
+    - 01 - Read Coils
+    - 02 - Read Discrete Inputs
+    - 03 - Read Holding Registers
+    - 04 - Read Input Registers
+    - 05 - Write Single Coil
+    - 06 - Write Single Register
+    - 15 - Write Multiple Coils
+    - 16 - Write Multiple Registers
+    - 17 - Report Slave ID
+    - 20 - Read File Record
+    - 21 - Write File Record
+    - 22 - Mask Write Register
+    - 23 - Read/Write Multiple Registers
+    - 24 - Read FIFO Queue
 - **Device ID Selection**: Scan for specific Modbus slave IDs (0-240)
 - **Progress Tracking**: Visual progress bar showing scan progress
 - **Real-time Logging**: View scan results in real-time with file logging support
@@ -36,6 +51,7 @@ Modbus RTU Scanner is a diagnostic tool that helps you identify the correct comm
 3. **Configure Parameters**: Check the communication parameters you want to test:
    - Default common settings are pre-selected
    - Select multiple options to test more combinations
+   - Choose which Modbus functions to test (default: 03 - Read Holding Registers)
 4. **Start Scan**: Click "Start Scan" to begin
    - The application will show estimated scan time
    - Confirm to proceed
@@ -49,7 +65,8 @@ Modbus RTU Scanner is a diagnostic tool that helps you identify the correct comm
 - Implements NLog for rotating file logs (stored in `/logs` directory)
 - Asynchronous scanning with cancellation token support
 - 500ms timeout per configuration test
-- Attempts to read holding register 0 to verify device communication
+- Tests standard Modbus function codes (01-24)
+- Attempts to read from address 0 to verify device communication
 
 ## Log Files
 
