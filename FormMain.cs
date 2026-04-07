@@ -37,7 +37,7 @@ namespace mobbus_rtu_scaner
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             // populate ToolStripComboBoxDeviceID with device IDs from 0 to 240
-            for (int i = 0; i <= 240; i++)
+            for (int i = 0; i <= 247; i++)
             {
                 ToolStripComboBoxDeviceID.Items.Add(i);
             }
@@ -54,15 +54,7 @@ namespace mobbus_rtu_scaner
                 CheckedListBoxBuadRate.Items.Add(baudRate);
             }
 
-            // check common baud rates by default
-            int[] commonBaudRates = [9600, 19200, 38400, 57600, 115200];
-            for (int i = 0; i < CheckedListBoxBuadRate.Items.Count; i++)
-            {
-                if (commonBaudRates.Contains((int)CheckedListBoxBuadRate.Items[i]))
-                {
-                    CheckedListBoxBuadRate.SetItemChecked(i, true);
-                }
-            }
+            
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -71,6 +63,85 @@ namespace mobbus_rtu_scaner
             foreach (var dataBit in dataBits)
             {
                 CheckedListBoxDatabit.Items.Add(dataBit);
+            }
+
+            
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            // populate CheckedListBoxStopbit with all stop bit options
+            StopBits[] stopBits = [StopBits.One, StopBits.OnePointFive, StopBits.Two];
+            foreach (var stopBit in stopBits)
+            {
+                CheckedListBoxStopbit.Items.Add(stopBit);
+            }
+
+            
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            // populate CheckedListBoxParity with all parity options
+            Parity[] parities = [Parity.None, Parity.Odd, Parity.Even, Parity.Mark, Parity.Space];
+            foreach (var parity in parities)
+            {
+                CheckedListBoxParity.Items.Add(parity);
+            }
+
+            
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+            Handshake[] handshakes = [Handshake.None, Handshake.XOnXOff, Handshake.RequestToSend, Handshake.RequestToSendXOnXOff];
+            foreach (var handshake in handshakes)
+            {
+                CheckedListBoxHandshake.Items.Add(handshake);
+            }
+
+            
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            // populate CheckedListBoxModbusFunctions with all Modbus function codes
+            int[] modbusFunctions = [1, 2, 3, 4, 5, 6, 15, 16];
+            foreach (var function in modbusFunctions)
+            {
+                // display function code and name (e.g., "1 - Read Coils")
+                string functionName = function switch
+                {
+                    1 => "Read Coils",
+                    2 => "Read Discrete Inputs",
+                    3 => "Read Holding Registers",
+                    4 => "Read Input Registers",
+                    5 => "Write Single Coil",
+                    6 => "Write Single Register",
+                    15 => "Write Multiple Coils",
+                    16 => "Write Multiple Registers",
+                    _ => "Unknown"
+                };
+
+                CheckedListBoxModbusFunctions.Items.Add($"{function} - {functionName}");
+            }
+
+            
+
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+            ToolStripButtonStopScan.Enabled = false;
+        }
+
+
+        private void CheckDefaultSettings()
+        {
+            // check common baud rates by default
+            int[] commonBaudRates = [9600, 19200, 38400, 57600, 115200];
+            for (int i = 0; i < CheckedListBoxBuadRate.Items.Count; i++)
+            {
+                if (commonBaudRates.Contains((int)CheckedListBoxBuadRate.Items[i]))
+                {
+                    CheckedListBoxBuadRate.SetItemChecked(i, true);
+                }
             }
 
             // check common data bits by default (7 and 8)
@@ -83,15 +154,6 @@ namespace mobbus_rtu_scaner
                 }
             }
 
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-            // populate CheckedListBoxStopbit with all stop bit options
-            StopBits[] stopBits = [StopBits.One, StopBits.OnePointFive, StopBits.Two];
-            foreach (var stopBit in stopBits)
-            {
-                CheckedListBoxStopbit.Items.Add(stopBit);
-            }
-
             // check common stop bits by default (One and Two)
             StopBits[] commonStopBits = [StopBits.One];
             for (int i = 0; i < CheckedListBoxStopbit.Items.Count; i++)
@@ -100,15 +162,6 @@ namespace mobbus_rtu_scaner
                 {
                     CheckedListBoxStopbit.SetItemChecked(i, true);
                 }
-            }
-
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-            // populate CheckedListBoxParity with all parity options
-            Parity[] parities = [Parity.None, Parity.Odd, Parity.Even, Parity.Mark, Parity.Space];
-            foreach (var parity in parities)
-            {
-                CheckedListBoxParity.Items.Add(parity);
             }
 
             // check common parity options by default (None, Even, Odd)
@@ -121,18 +174,9 @@ namespace mobbus_rtu_scaner
                 }
             }
 
-            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            
-
-            Handshake[] handshakes = [Handshake.None, Handshake.XOnXOff, Handshake.RequestToSend, Handshake.RequestToSendXOnXOff];
-            foreach (var handshake in handshakes)
-            {
-                CheckedListBoxHandshake.Items.Add(handshake);
-            }
-
             // check common handshake options by default (None)
-                        Handshake[] commonHandshakes = [Handshake.None, Handshake.RequestToSend];
-            for(int i = 0;i < CheckedListBoxHandshake.Items.Count;i++)  
+            Handshake[] commonHandshakes = [Handshake.None, Handshake.RequestToSend];
+            for (int i = 0; i < CheckedListBoxHandshake.Items.Count; i++)
             {
                 if (commonHandshakes.Contains((Handshake)CheckedListBoxHandshake.Items[i]))
                 {
@@ -140,8 +184,7 @@ namespace mobbus_rtu_scaner
                 }
             }
 
-
-            ToolStripButtonStopScan.Enabled = false;
+            CheckedListBoxModbusFunctions.SetItemChecked(2, true);
         }
 
         private void InitializeNLog()
@@ -213,7 +256,7 @@ namespace mobbus_rtu_scaner
             TimeSpan estimatedTime = TimeSpan.FromSeconds(totalCombinations * 0.5);
 
             var result = MessageBox.Show($"This scan will test {totalCombinations} configurations and may take approximately {estimatedTime.TotalMinutes:F2} minutes. Do you want to proceed?", "Confirm Scan", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            
+
             if (result != DialogResult.Yes)
             {
                 return;
@@ -262,6 +305,25 @@ namespace mobbus_rtu_scaner
             ToolStripProgressBarScan.Value = 0;
         }
 
+        private double GetTotalCombinations()
+        {
+            double baudRatesCount = CheckedListBoxBuadRate.CheckedItems.Count;
+            double dataBitsCount = CheckedListBoxDatabit.CheckedItems.Count;
+            double paritiesCount = CheckedListBoxParity.CheckedItems.Count;
+            double stopBitsCount = CheckedListBoxStopbit.CheckedItems.Count;
+            double handshakesCount = CheckedListBoxHandshake.CheckedItems.Count;
+            double modbusFunctionsCount = CheckedListBoxModbusFunctions.CheckedItems.Count;
+            double totalCombinations = baudRatesCount * dataBitsCount * paritiesCount * stopBitsCount * handshakesCount * modbusFunctionsCount;
+            return totalCombinations;
+        }
+
+        private TimeSpan GetEstimatedTime()
+        {
+            double totalCombinations = GetTotalCombinations();
+            return TimeSpan.FromSeconds(totalCombinations * 0.5);
+        }
+
+
         private async Task ScanModbusDeviceAsync(string portName, CancellationToken cancellationToken)
         {
             LogMessage($"Starting scan on {portName}...");
@@ -272,14 +334,13 @@ namespace mobbus_rtu_scaner
             Parity[] parities = CheckedListBoxParity.CheckedItems.Cast<Parity>().ToArray();
             StopBits[] stopBits = CheckedListBoxStopbit.CheckedItems.Cast<StopBits>().ToArray();
             Handshake[] handshakes = CheckedListBoxHandshake.CheckedItems.Cast<Handshake>().ToArray();
+            string[] modbusFunctions = CheckedListBoxModbusFunctions.CheckedItems.Cast<string>().ToArray();
 
-            // calculate total combinations for progress tracking
-            int totalCombinations = baudRates.Length * dataBits.Length * parities.Length * stopBits.Length * handshakes.Length;
-            TimeSpan estimatedTime = TimeSpan.FromSeconds(totalCombinations * 0.5);
+            TimeSpan estimatedTime = GetEstimatedTime();
             TimeSpan interval = TimeSpan.FromSeconds(0.5);
 
             ToolStripProgressBarScan.Value = 0;
-            ToolStripProgressBarScan.Maximum = totalCombinations + 1;
+            ToolStripProgressBarScan.Maximum = (int)GetTotalCombinations() + 1;
 
             byte slaveId = ToolStripComboBoxDeviceID.SelectedItem != null ? Convert.ToByte(ToolStripComboBoxDeviceID.SelectedItem) : (byte)1;
 
@@ -293,17 +354,23 @@ namespace mobbus_rtu_scaner
                         {
                             foreach (var baudRate in baudRates)
                             {
-                                if (cancellationToken.IsCancellationRequested)
+                                foreach (var modbusFunction in modbusFunctions)
                                 {
-                                    return;
+                                    // switch to selected Modbus function code (e.g., "3 - Read Holding Registers" -> 3)
+                                    int functionCode = int.Parse(modbusFunction.Split('-')[0].Trim());
+
+                                    if (cancellationToken.IsCancellationRequested)
+                                    {
+                                        return;
+                                    }
+
+                                    ToolStripProgressBarScan.Value++;
+                                    estimatedTime = estimatedTime.Subtract(interval);
+
+                                    await TryConfigurationAsync(functionCode, portName, baudRate, dataBit, parity, stopBit, handshake, slaveId, cancellationToken);
+
+                                    toolStripStatusLabelEstimatedTtimeRremaining.Text = $"Estimated time remaining: {estimatedTime:mm\\:ss}";
                                 }
-
-                                ToolStripProgressBarScan.Value++;
-                                estimatedTime = estimatedTime.Subtract(interval);
-
-                                await TryConfigurationAsync( portName, baudRate, dataBit, parity, stopBit, handshake, slaveId, cancellationToken);
-
-                                toolStripStatusLabel1.Text = $"Estimated time remaining: {estimatedTime:mm\\:ss}";
                             }
                         }
                     }
@@ -316,13 +383,13 @@ namespace mobbus_rtu_scaner
             LogMessage("Scan completed.");
         }
 
-        private async Task TryConfigurationAsync(string portName, int baudRate, int dataBits, Parity parity, StopBits stopBits, Handshake handshake, byte slaveId, CancellationToken cancellationToken)
+        private async Task TryConfigurationAsync(int modbus_function, string portName, int baudRate, int dataBits, Parity parity, StopBits stopBits, Handshake handshake, byte slaveId, CancellationToken cancellationToken)
         {
             SerialPort? serialPort = null;
 
             try
             {
-                string config = $"SlaveID:{slaveId} - {portName} {baudRate},{dataBits},{parity},{stopBits},{handshake}";
+                string config = $"SlaveID:{slaveId}, Function:{modbus_function}, {portName} {baudRate},{dataBits},{parity},{stopBits},{handshake}";
 
                 LogMessage($"Testing: {config}");
 
@@ -346,10 +413,59 @@ namespace mobbus_rtu_scaner
                 ushort startAddress = 0;
                 ushort numRegisters = 1;
 
-                var registers = await Task.Run(() => master.ReadHoldingRegisters(slaveId, startAddress, numRegisters), cancellationToken);
+                bool[]? coils = null;
+                ushort[]? registers = null;
+
+                switch (modbus_function)
+                {
+                    case 1:
+                        coils = await Task.Run(() => master.ReadCoils(slaveId, startAddress, numRegisters), cancellationToken);
+                        break;
+
+                    case 2:
+                        coils = await Task.Run(() => master.ReadInputs(slaveId, startAddress, numRegisters), cancellationToken);
+                        break;
+
+                    case 3:
+                        registers = await Task.Run(() => master.ReadHoldingRegisters(slaveId, startAddress, numRegisters), cancellationToken);
+                        break;
+
+                    case 4:
+                        registers = await Task.Run(() => master.ReadInputRegisters(slaveId, startAddress, numRegisters), cancellationToken);
+                        break;
+
+                    case 5:
+                        await Task.Run(() => master.WriteSingleCoil(slaveId, startAddress, true), cancellationToken);
+                        break;
+
+                    case 6:
+                        await Task.Run(() => master.WriteSingleRegister(slaveId, startAddress, 12345), cancellationToken);
+                        break;
+
+                    case 15:
+                        bool[] coilValues = new bool[numRegisters];
+                        for (int i = 0; i < numRegisters; i++)
+                        {
+                            coilValues[i] = true;
+                        }
+                        await Task.Run(() => master.WriteMultipleCoils(slaveId, startAddress, coilValues), cancellationToken);
+                        break;
+
+                    case 16:
+                        ushort[] registerValues = new ushort[numRegisters];
+                        for (int i = 0; i < numRegisters; i++)
+                        {
+                            registerValues[i] = 12345;
+                        }
+                        await Task.Run(() => master.WriteMultipleRegisters(slaveId, startAddress, registerValues), cancellationToken);
+                        break;
+
+                    default:
+                        LogMessage($"Unsupported Modbus function code: {modbus_function}");
+                        return;
+                }
 
                 LogMessage($"✓ SUCCESS: Device found! {config}");
-                LogMessage($"  Read {registers.Length} register(s): {string.Join(", ", registers)}");
                 LogMessage("");
             }
             catch (TimeoutException)
@@ -396,6 +512,35 @@ namespace mobbus_rtu_scaner
             // make sure the latest log entry is visible
             TextBoxLogger.SelectionStart = TextBoxLogger.Text.Length;
             TextBoxLogger.ScrollToCaret();
+        }
+
+
+        private void SetupInformation()
+        {
+            double totalCombinations = GetTotalCombinations();
+            textBoxTotalCombinations.Text = $"Total Combinations: {totalCombinations}";
+            TimeSpan estimatedTime = GetEstimatedTime();
+            textBoxEstimatedTime.Text = $"Estimated Time: {estimatedTime:mm\\:ss}";
+        }
+
+        private void ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            try
+            {
+                this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        SetupInformation();
+                    });
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private void FormMain_Shown(object sender, EventArgs e)
+        {
+            CheckDefaultSettings();
+            SetupInformation();
         }
     }
 }
