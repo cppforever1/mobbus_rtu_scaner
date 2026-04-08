@@ -4,11 +4,11 @@ A Windows Forms application for scanning and detecting Modbus RTU devices on ser
 
 ## Overview
 
-Modbus RTU Scanner is a diagnostic tool that helps you identify the correct communication settings for Modbus RTU devices. It systematically tests different combinations of serial port parameters (baud rate, data bits, parity, stop bits, and handshake) to find working configurations.
+Modbus RTU Scanner is a diagnostic tool that helps you identify the correct communication settings for Modbus RTU devices. It systematically tests different combinations of serial port parameters (baud rate, data bits, parity, stop bits, and handshake) to find working configurations. The scanner automatically stops when a valid configuration is found.
 
 ## Features
 
-- **Serial Port Detection**: Automatically detects and lists available COM ports
+- **Serial Port Detection**: Automatically detects and lists available COM ports (sorted numerically)
 - **Configurable Parameters**: Test multiple combinations of:
   - Baud Rates: 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 56000, 57600, 115200, 128000, 230400, 256000, 460800, 921600
   - Data Bits: 5, 6, 7, 8
@@ -24,17 +24,17 @@ Modbus RTU Scanner is a diagnostic tool that helps you identify the correct comm
     - 06 - Write Single Register
     - 15 - Write Multiple Coils
     - 16 - Write Multiple Registers
-    - 17 - Report Slave ID
-    - 20 - Read File Record
-    - 21 - Write File Record
-    - 22 - Mask Write Register
-    - 23 - Read/Write Multiple Registers
-    - 24 - Read FIFO Queue
-- **Device ID Selection**: Scan for specific Modbus slave IDs (0-240)
-- **Progress Tracking**: Visual progress bar showing scan progress
-- **Real-time Logging**: View scan results in real-time with file logging support
+- **Device ID Selection**: Scan for specific Modbus slave IDs (0-247)
+- **Configurable Timeout**: Adjustable timeout per configuration test (default: 1000ms)
+- **Progress Tracking**: Visual progress bar showing scan progress with real-time ETA
+- **Color-Coded Logging**: 
+  - Green background for successful device detection
+  - Red background for errors and failures
+  - Real-time logging with file logging support
+- **Smart Scanning**: Automatically stops when a valid configuration is found
 - **Cancellable Scans**: Stop ongoing scans at any time
 - **Time Estimation**: Provides estimated scan duration before starting
+- **Default Settings**: Pre-configured with common communication parameters
 
 ## Requirements
 
@@ -61,12 +61,15 @@ Modbus RTU Scanner is a diagnostic tool that helps you identify the correct comm
 ## Technical Details
 
 - Built with Windows Forms (.NET 10)
-- Uses NModbus for Modbus RTU communication
+- Uses NModbus library for Modbus RTU communication with CRC frame checking enabled
 - Implements NLog for rotating file logs (stored in `/logs` directory)
 - Asynchronous scanning with cancellation token support
-- 500ms timeout per configuration test
-- Tests standard Modbus function codes (01-24)
-- Attempts to read from address 0 to verify device communication
+- Configurable timeout per configuration test (default: 1000ms)
+- Tests Modbus function codes: 01, 02, 03, 04, 05, 06, 15, 16
+- Attempts to read/write from address 0 with 1 register to verify device communication
+- Smart scanning: stops immediately when a valid configuration is found
+- Color-coded logging for easy identification of results
+- Detailed error reporting including Modbus slave exception codes
 
 ## Log Files
 
