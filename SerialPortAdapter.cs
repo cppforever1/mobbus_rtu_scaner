@@ -3,14 +3,9 @@ using NModbus.IO;
 
 namespace mobbus_rtu_scaner
 {
-    public class SerialPortAdapter : IStreamResource
+    public class SerialPortAdapter(SerialPort serialPort) : IStreamResource
     {
-        private readonly SerialPort serialPort;
-
-        public SerialPortAdapter(SerialPort serialPort)
-        {
-            this.serialPort = serialPort ?? throw new ArgumentNullException(nameof(serialPort));
-        }
+        private readonly SerialPort serialPort = serialPort ?? throw new ArgumentNullException(nameof(serialPort));
 
         public Stream Stream => serialPort.BaseStream;
 

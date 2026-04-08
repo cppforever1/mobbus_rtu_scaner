@@ -63,6 +63,9 @@
             CheckedListBoxBuadRate = new CheckedListBox();
             textBox1 = new TextBox();
             TextBoxLogger = new TextBox();
+            toolStripSeparator2 = new ToolStripSeparator();
+            toolStripLabel2 = new ToolStripLabel();
+            ToolStripTextBoxTimeoutMS = new ToolStripTextBox();
             StatusStripMain.SuspendLayout();
             ToolStripMain.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)SplitContainer).BeginInit();
@@ -101,7 +104,7 @@
             // ToolStripMain
             // 
             ToolStripMain.ImageScalingSize = new Size(20, 20);
-            ToolStripMain.Items.AddRange(new ToolStripItem[] { ToolStripComboBoxPorts, ToolStripButtonStartScan, ToolStripButtonStopScan, toolStripSeparator1, toolStripLabel1, ToolStripComboBoxDeviceID });
+            ToolStripMain.Items.AddRange(new ToolStripItem[] { ToolStripComboBoxPorts, ToolStripButtonStartScan, ToolStripButtonStopScan, toolStripSeparator1, toolStripLabel1, ToolStripComboBoxDeviceID, toolStripSeparator2, toolStripLabel2, ToolStripTextBoxTimeoutMS });
             ToolStripMain.Location = new Point(0, 0);
             ToolStripMain.Name = "ToolStripMain";
             ToolStripMain.Size = new Size(1310, 28);
@@ -435,6 +438,25 @@
             TextBoxLogger.TabIndex = 0;
             TextBoxLogger.WordWrap = false;
             // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(6, 28);
+            // 
+            // toolStripLabel2
+            // 
+            toolStripLabel2.Name = "toolStripLabel2";
+            toolStripLabel2.Size = new Size(184, 25);
+            toolStripLabel2.Text = "Read Timeout Miliseconds";
+            // 
+            // ToolStripTextBoxTimeoutMS
+            // 
+            ToolStripTextBoxTimeoutMS.Name = "ToolStripTextBoxTimeoutMS";
+            ToolStripTextBoxTimeoutMS.Size = new Size(60, 28);
+            ToolStripTextBoxTimeoutMS.Text = "1000";
+            ToolStripTextBoxTimeoutMS.TextBoxTextAlign = HorizontalAlignment.Center;
+            ToolStripTextBoxTimeoutMS.TextChanged += ToolStripTextBoxTimeoutMS_TextChanged;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -511,5 +533,8 @@
         private TextBox textBox7;
         private TextBox textBoxTotalCombinations;
         private TextBox textBoxEstimatedTime;
+        private ToolStripSeparator toolStripSeparator2;
+        private ToolStripLabel toolStripLabel2;
+        private ToolStripTextBox ToolStripTextBoxTimeoutMS;
     }
 }

@@ -54,7 +54,7 @@ namespace mobbus_rtu_scaner
                 CheckedListBoxBuadRate.Items.Add(baudRate);
             }
 
-            
+
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -65,7 +65,7 @@ namespace mobbus_rtu_scaner
                 CheckedListBoxDatabit.Items.Add(dataBit);
             }
 
-            
+
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -76,7 +76,7 @@ namespace mobbus_rtu_scaner
                 CheckedListBoxStopbit.Items.Add(stopBit);
             }
 
-            
+
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -87,7 +87,7 @@ namespace mobbus_rtu_scaner
                 CheckedListBoxParity.Items.Add(parity);
             }
 
-            
+
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -98,7 +98,7 @@ namespace mobbus_rtu_scaner
                 CheckedListBoxHandshake.Items.Add(handshake);
             }
 
-            
+
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -123,7 +123,7 @@ namespace mobbus_rtu_scaner
                 CheckedListBoxModbusFunctions.Items.Add($"{function} - {functionName}");
             }
 
-            
+
 
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -135,7 +135,7 @@ namespace mobbus_rtu_scaner
         private void CheckDefaultSettings()
         {
             // check common baud rates by default
-            int[] commonBaudRates = [9600, 19200, 38400, 57600, 115200];
+            int[] commonBaudRates = [9600, 14400, 19200, 28800, 38400, 56000, 57600, 115200];
             for (int i = 0; i < CheckedListBoxBuadRate.Items.Count; i++)
             {
                 if (commonBaudRates.Contains((int)CheckedListBoxBuadRate.Items[i]))
@@ -205,6 +205,21 @@ namespace mobbus_rtu_scaner
             NLog.LogManager.Configuration = config;
         }
 
+        private void UpdateGUIState(bool scanning)
+        {
+            ToolStripButtonStartScan.Enabled = !scanning;
+            ToolStripButtonStopScan.Enabled = scanning;
+            ToolStripComboBoxPorts.Enabled = !scanning;
+            ToolStripComboBoxDeviceID.Enabled = !scanning;
+            ToolStripTextBoxTimeoutMS.Enabled = !scanning;
+            CheckedListBoxBuadRate.Enabled = !scanning;
+            CheckedListBoxDatabit.Enabled = !scanning;
+            CheckedListBoxParity.Enabled = !scanning;
+            CheckedListBoxStopbit.Enabled = !scanning;
+            CheckedListBoxHandshake.Enabled = !scanning;
+            CheckedListBoxModbusFunctions.Enabled = !scanning;
+        }
+
         private async void ToolStripButtonStartScan_Click(object sender, EventArgs e)
         {
             TextBoxLogger.Clear();
@@ -251,22 +266,21 @@ namespace mobbus_rtu_scaner
                 return;
             }
 
-            // calculate total combinations for progress tracking in second. timeout 500 ms, so 0.5 second per combination
-            int totalCombinations = baudRates.Length * dataBits.Length * parities.Length * stopBits.Length * handshakes.Length;
-            TimeSpan estimatedTime = TimeSpan.FromSeconds(totalCombinations * 0.5);
+            // calculate total combinations for progress tracking in second. timeout ms, so 0.5 second per combination
+            int totalCombinations = (int)GetTotalCombinations();
+            double timeoutms = GetTimeoutPerCombination();
+            TimeSpan estimatedTime = TimeSpan.FromMilliseconds(totalCombinations * timeoutms);
 
-            var result = MessageBox.Show($"This scan will test {totalCombinations} configurations and may take approximately {estimatedTime.TotalMinutes:F2} minutes. Do you want to proceed?", "Confirm Scan", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = MessageBox.Show($"This scan will test {totalCombinations} configurations and may take approximately {GetEstimatedTimeString(estimatedTime)}. Do you want to proceed?", "Confirm Scan", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result != DialogResult.Yes)
             {
                 return;
             }
 
-            ToolStripButtonStartScan.Enabled = false;
-            ToolStripButtonStopScan.Enabled = true;
-            ToolStripComboBoxPorts.Enabled = false;
-            ToolStripComboBoxDeviceID.Enabled = false;
+            
             isScanning = true;
+            UpdateGUIState(isScanning);
 
             cancellationTokenSource = new CancellationTokenSource();
 
@@ -284,13 +298,8 @@ namespace mobbus_rtu_scaner
             }
             finally
             {
-                ToolStripButtonStartScan.Enabled = true;
-                ToolStripButtonStopScan.Enabled = false;
-                ToolStripComboBoxPorts.Enabled = true;
-                ToolStripComboBoxDeviceID.Enabled = true;
                 isScanning = false;
-                cancellationTokenSource?.Dispose();
-                cancellationTokenSource = null;
+                UpdateGUIState(isScanning);
             }
         }
 
@@ -317,10 +326,32 @@ namespace mobbus_rtu_scaner
             return totalCombinations;
         }
 
+        double GetTimeoutPerCombination()
+        {
+            return ToolStripTextBoxTimeoutMS.Text != "" ? Convert.ToDouble(ToolStripTextBoxTimeoutMS.Text) : 1000;
+        }
+
         private TimeSpan GetEstimatedTime()
         {
             double totalCombinations = GetTotalCombinations();
-            return TimeSpan.FromSeconds(totalCombinations * 0.5);
+            double timeoutms = GetTimeoutPerCombination();
+            return TimeSpan.FromMilliseconds(totalCombinations * timeoutms);
+        }
+
+        private string GetEstimatedTimeString(TimeSpan estimatedTime)
+        {
+            string eta = "Estimated Time: ";
+
+            if (estimatedTime.TotalHours > 1)
+                eta += $"{estimatedTime.TotalHours:F2} hours ";
+            
+            if (estimatedTime.TotalMinutes > 1)
+                eta += $"{estimatedTime.Minutes:F0} minutes ";
+
+            if (estimatedTime.TotalSeconds > 1)
+                eta += $"{estimatedTime.Seconds:F0} seconds ";
+
+            return eta;
         }
 
 
@@ -337,7 +368,8 @@ namespace mobbus_rtu_scaner
             string[] modbusFunctions = CheckedListBoxModbusFunctions.CheckedItems.Cast<string>().ToArray();
 
             TimeSpan estimatedTime = GetEstimatedTime();
-            TimeSpan interval = TimeSpan.FromSeconds(0.5);
+            double timeoutms = GetTimeoutPerCombination();
+            TimeSpan interval = TimeSpan.FromMilliseconds(timeoutms);
 
             ToolStripProgressBarScan.Value = 0;
             ToolStripProgressBarScan.Maximum = (int)GetTotalCombinations() + 1;
@@ -367,9 +399,17 @@ namespace mobbus_rtu_scaner
                                     ToolStripProgressBarScan.Value++;
                                     estimatedTime = estimatedTime.Subtract(interval);
 
+                                    // update all CheckedListBoxes to reflect the current configuration being tested
+                                    CheckedListBoxBuadRate.SelectedItem = baudRate;
+                                    CheckedListBoxDatabit.SelectedItem = dataBit;
+                                    CheckedListBoxParity.SelectedItem = parity;
+                                    CheckedListBoxStopbit.SelectedItem = stopBit;
+                                    CheckedListBoxHandshake.SelectedItem = handshake;
+                                    CheckedListBoxModbusFunctions.SelectedItem = modbusFunction;
+
                                     await TryConfigurationAsync(functionCode, portName, baudRate, dataBit, parity, stopBit, handshake, slaveId, cancellationToken);
 
-                                    toolStripStatusLabelEstimatedTtimeRremaining.Text = $"Estimated time remaining: {estimatedTime:mm\\:ss}";
+                                    toolStripStatusLabelEstimatedTtimeRremaining.Text = GetEstimatedTimeString(estimatedTime);
                                 }
                             }
                         }
@@ -389,7 +429,8 @@ namespace mobbus_rtu_scaner
 
             try
             {
-                string config = $"SlaveID:{slaveId}, Function:{modbus_function}, {portName} {baudRate},{dataBits},{parity},{stopBits},{handshake}";
+                double timeoutms = GetTimeoutPerCombination();
+                string config = $"SlaveID:{slaveId}, Modbus Function:{modbus_function}, Serial Port:{portName}, Baudrate:{baudRate}, Databit:{dataBits}, Parity:{parity}, StopBits:{stopBits}, Handshake:{handshake}, Timeout:{timeoutms} milliseconds";
 
                 LogMessage($"Testing: {config}");
 
@@ -400,8 +441,8 @@ namespace mobbus_rtu_scaner
                     Parity = parity,
                     StopBits = stopBits,
                     Handshake = handshake,
-                    ReadTimeout = 500,
-                    WriteTimeout = 500
+                    ReadTimeout = (int)GetTimeoutPerCombination(),
+                    WriteTimeout = (int)GetTimeoutPerCombination()
                 };
 
                 serialPort.Open();
@@ -468,6 +509,14 @@ namespace mobbus_rtu_scaner
                 LogMessage($"✓ SUCCESS: Device found! {config}");
                 LogMessage("");
             }
+            catch(SlaveException ex)
+            {
+                LogMessage($"✗ Modbus error: {ex.Message} SlaveExceptionCode:{ex.SlaveExceptionCode}, SlaveExceptionString:{GetSlaveExceptionString(ex.SlaveExceptionCode)}");
+            }
+            catch(FormatException ex)
+            {
+                LogMessage($"✗ Format error: {ex.Message}");
+            }
             catch (TimeoutException)
             {
                 LogMessage($"Timeout: from device {portName}.");
@@ -498,6 +547,33 @@ namespace mobbus_rtu_scaner
             }
         }
 
+        private object GetSlaveExceptionString(byte slaveExceptionCode)
+        {
+            switch (slaveExceptionCode)
+            {
+                case 1:
+                    return "Illegal Function";
+                case 2:
+                    return "Illegal Data Address";
+                case 3:
+                    return "Illegal Data Value";
+                case 4:
+                    return "Slave Device Failure";
+                case 5:
+                    return "Acknowledge";
+                case 6:
+                    return "Slave Device Busy";
+                case 8:
+                    return "Memory Parity Error";
+                case 10:
+                    return "Gateway Path Unavailable";
+                case 11:
+                    return "Gateway Target Device Failed to Respond";
+                default:
+                    return $"Unknown Slave Exception Code: {slaveExceptionCode}";
+            }
+        }
+
         private void LogMessage(string message)
         {
             if (InvokeRequired)
@@ -520,7 +596,7 @@ namespace mobbus_rtu_scaner
             double totalCombinations = GetTotalCombinations();
             textBoxTotalCombinations.Text = $"Total Combinations: {totalCombinations}";
             TimeSpan estimatedTime = GetEstimatedTime();
-            textBoxEstimatedTime.Text = $"Estimated Time: {estimatedTime:mm\\:ss}";
+            textBoxEstimatedTime.Text = GetEstimatedTimeString(estimatedTime);
         }
 
         private void ItemCheck(object sender, ItemCheckEventArgs e)
@@ -538,6 +614,12 @@ namespace mobbus_rtu_scaner
         }
 
         private void FormMain_Shown(object sender, EventArgs e)
+        {
+            CheckDefaultSettings();
+            SetupInformation();
+        }
+
+        private void ToolStripTextBoxTimeoutMS_TextChanged(object sender, EventArgs e)
         {
             CheckDefaultSettings();
             SetupInformation();
