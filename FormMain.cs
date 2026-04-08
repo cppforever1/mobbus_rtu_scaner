@@ -1,5 +1,6 @@
-using System.IO.Ports;
 using NModbus;
+using System.IO.Ports;
+using System.Net;
 
 namespace mobbus_rtu_scaner
 {
@@ -222,7 +223,7 @@ namespace mobbus_rtu_scaner
 
         private async void ToolStripButtonStartScan_Click(object sender, EventArgs e)
         {
-            TextBoxLogger.Clear();
+            richTextBoxLogger.Clear();
             ToolStripProgressBarScan.Value = 0;
 
             if (ToolStripComboBoxPorts.SelectedItem == null)
@@ -295,6 +296,7 @@ namespace mobbus_rtu_scaner
             catch (Exception ex)
             {
                 MessageBox.Show($"Error during scan: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                LogError($"Error during scan: {ex.Message}");
             }
             finally
             {
@@ -407,7 +409,15 @@ namespace mobbus_rtu_scaner
                                     CheckedListBoxHandshake.SelectedItem = handshake;
                                     CheckedListBoxModbusFunctions.SelectedItem = modbusFunction;
 
-                                    await TryConfigurationAsync(functionCode, portName, baudRate, dataBit, parity, stopBit, handshake, slaveId, cancellationToken);
+                                    bool result = await TryConfigurationAsync(functionCode, portName, baudRate, dataBit, parity, stopBit, handshake, slaveId, cancellationToken);
+
+                                    if (result)
+                                    {
+                                        ToolStripProgressBarScan.Value = 0;
+                                        
+                                        LogMessage($"Scan completed. Found valid configuration: SlaveID:{slaveId}, Modbus Function:{functionCode}, Serial Port:{portName}, Baudrate:{baudRate}, Databit:{dataBit}, Parity:{parity}, StopBits:{stopBits}, Handshake:{handshake}", Color.Green);
+                                        return;
+                                    }
 
                                     toolStripStatusLabelEstimatedTtimeRremaining.Text = GetEstimatedTimeString(estimatedTime);
                                 }
@@ -420,10 +430,10 @@ namespace mobbus_rtu_scaner
             ToolStripProgressBarScan.Value = 0;
 
             LogMessage("----------------------------------------");
-            LogMessage("Scan completed.");
+            LogMessage("Scan completed. No valid configuration found.", Color.Red);
         }
 
-        private async Task TryConfigurationAsync(int modbus_function, string portName, int baudRate, int dataBits, Parity parity, StopBits stopBits, Handshake handshake, byte slaveId, CancellationToken cancellationToken)
+        private async Task<bool> TryConfigurationAsync(int modbus_function, string portName, int baudRate, int dataBits, Parity parity, StopBits stopBits, Handshake handshake, byte slaveId, CancellationToken cancellationToken)
         {
             SerialPort? serialPort = null;
 
@@ -451,6 +461,8 @@ namespace mobbus_rtu_scaner
                 var adapter = new SerialPortAdapter(serialPort);
                 IModbusSerialMaster master = factory.CreateRtuMaster(adapter);
 
+                master.Transport.CheckFrame = true;
+
                 ushort startAddress = 0;
                 ushort numRegisters = 1;
 
@@ -468,6 +480,7 @@ namespace mobbus_rtu_scaner
                         break;
 
                     case 3:
+
                         registers = await Task.Run(() => master.ReadHoldingRegisters(slaveId, startAddress, numRegisters), cancellationToken);
                         break;
 
@@ -502,40 +515,44 @@ namespace mobbus_rtu_scaner
                         break;
 
                     default:
-                        LogMessage($"Unsupported Modbus function code: {modbus_function}");
-                        return;
+                        LogError($"Unsupported Modbus function code: {modbus_function}");
+                        return false;
                 }
 
-                LogMessage($"✓ SUCCESS: Device found! {config}");
+
+
+                //LogMessage($"✓ SUCCESS: Device found! {config}", Color.Green);
                 LogMessage("");
+                return true;
             }
+
             catch(SlaveException ex)
             {
-                LogMessage($"✗ Modbus error: {ex.Message} SlaveExceptionCode:{ex.SlaveExceptionCode}, SlaveExceptionString:{GetSlaveExceptionString(ex.SlaveExceptionCode)}");
+                LogError($"✗ Modbus error: {ex.Message} SlaveExceptionCode:{ex.SlaveExceptionCode}, SlaveExceptionString:{GetSlaveExceptionString(ex.SlaveExceptionCode)}");
             }
             catch(FormatException ex)
             {
-                LogMessage($"✗ Format error: {ex.Message}");
+                LogError($"✗ Format error: {ex.Message}");
             }
             catch (TimeoutException)
             {
-                LogMessage($"Timeout: from device {portName}.");
+                LogError($"✗ Timeout: from device {portName}.");
             }
             catch (InvalidOperationException)
             {
-                LogMessage($"Invalid operation: Port {portName} is not open.");
+                LogError($"✗ Invalid operation: Port {portName} is not open.");
             }
             catch (IOException)
             {
-                LogMessage($"I/O error: Unable to communicate with {portName}.");
+                LogError($"✗ I/O error: Unable to communicate with {portName}.");
             }
             catch (UnauthorizedAccessException ex)
             {
-                LogMessage($"✗ Port access denied: {ex.Message}");
+                LogError($"✗ Port access denied: {ex.Message}");
             }
             catch (Exception ex)
             {
-                LogMessage($"✗ Error: {ex.Message}");
+                LogError($"✗ Error: {ex.Message}");
             }
             finally
             {
@@ -545,6 +562,8 @@ namespace mobbus_rtu_scaner
                 }
                 serialPort?.Dispose();
             }
+
+            return false;
         }
 
         private object GetSlaveExceptionString(byte slaveExceptionCode)
@@ -574,20 +593,46 @@ namespace mobbus_rtu_scaner
             }
         }
 
-        private void LogMessage(string message)
+        private void LogMessage(string message, Color? color = null)
         {
             if (InvokeRequired)
             {
-                Invoke(() => LogMessage(message));
+                Invoke(() => LogMessage(message, color));
                 return;
             }
 
             NLog.LogManager.GetCurrentClassLogger().Info(message);
-            TextBoxLogger.AppendText(message + Environment.NewLine);
+            richTextBoxLogger.AppendText(message + Environment.NewLine);
+
+            if (color.HasValue)
+            {
+                richTextBoxLogger.SelectionStart = richTextBoxLogger.Text.Length - message.Length - Environment.NewLine.Length;
+                richTextBoxLogger.SelectionLength = message.Length + Environment.NewLine.Length;
+                richTextBoxLogger.SelectionBackColor = color.Value;
+            }
 
             // make sure the latest log entry is visible
-            TextBoxLogger.SelectionStart = TextBoxLogger.Text.Length;
-            TextBoxLogger.ScrollToCaret();
+            richTextBoxLogger.SelectionStart = richTextBoxLogger.Text.Length;
+            richTextBoxLogger.ScrollToCaret();
+        }
+
+        private void LogError(string message)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(() => LogError(message));
+                return;
+            }
+
+            NLog.LogManager.GetCurrentClassLogger().Error(message);
+
+            richTextBoxLogger.AppendText(message + Environment.NewLine);
+
+            // backcolor red for error messages last line
+            richTextBoxLogger.SelectionStart = richTextBoxLogger.Text.Length - message.Length - Environment.NewLine.Length;
+            richTextBoxLogger.SelectionLength = message.Length;
+            richTextBoxLogger.SelectionBackColor = Color.Red;
+            richTextBoxLogger.ScrollToCaret();
         }
 
 

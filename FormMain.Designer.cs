@@ -39,6 +39,9 @@
             toolStripSeparator1 = new ToolStripSeparator();
             toolStripLabel1 = new ToolStripLabel();
             ToolStripComboBoxDeviceID = new ToolStripComboBox();
+            toolStripSeparator2 = new ToolStripSeparator();
+            toolStripLabel2 = new ToolStripLabel();
+            ToolStripTextBoxTimeoutMS = new ToolStripTextBox();
             SplitContainer = new SplitContainer();
             panel7 = new Panel();
             textBoxEstimatedTime = new TextBox();
@@ -62,10 +65,7 @@
             panel1 = new Panel();
             CheckedListBoxBuadRate = new CheckedListBox();
             textBox1 = new TextBox();
-            TextBoxLogger = new TextBox();
-            toolStripSeparator2 = new ToolStripSeparator();
-            toolStripLabel2 = new ToolStripLabel();
-            ToolStripTextBoxTimeoutMS = new ToolStripTextBox();
+            richTextBoxLogger = new RichTextBox();
             StatusStripMain.SuspendLayout();
             ToolStripMain.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)SplitContainer).BeginInit();
@@ -156,6 +156,25 @@
             ToolStripComboBoxDeviceID.Name = "ToolStripComboBoxDeviceID";
             ToolStripComboBoxDeviceID.Size = new Size(80, 28);
             // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(6, 28);
+            // 
+            // toolStripLabel2
+            // 
+            toolStripLabel2.Name = "toolStripLabel2";
+            toolStripLabel2.Size = new Size(184, 25);
+            toolStripLabel2.Text = "Read Timeout Miliseconds";
+            // 
+            // ToolStripTextBoxTimeoutMS
+            // 
+            ToolStripTextBoxTimeoutMS.Name = "ToolStripTextBoxTimeoutMS";
+            ToolStripTextBoxTimeoutMS.Size = new Size(60, 28);
+            ToolStripTextBoxTimeoutMS.Text = "1000";
+            ToolStripTextBoxTimeoutMS.TextBoxTextAlign = HorizontalAlignment.Center;
+            ToolStripTextBoxTimeoutMS.TextChanged += ToolStripTextBoxTimeoutMS_TextChanged;
+            // 
             // SplitContainer
             // 
             SplitContainer.Dock = DockStyle.Fill;
@@ -175,7 +194,7 @@
             // 
             // SplitContainer.Panel2
             // 
-            SplitContainer.Panel2.Controls.Add(TextBoxLogger);
+            SplitContainer.Panel2.Controls.Add(richTextBoxLogger);
             SplitContainer.Size = new Size(1310, 722);
             SplitContainer.SplitterDistance = 442;
             SplitContainer.TabIndex = 3;
@@ -426,36 +445,14 @@
             textBox1.Text = "Buad Rate";
             textBox1.TextAlign = HorizontalAlignment.Center;
             // 
-            // TextBoxLogger
+            // richTextBoxLogger
             // 
-            TextBoxLogger.Dock = DockStyle.Fill;
-            TextBoxLogger.Location = new Point(0, 0);
-            TextBoxLogger.Multiline = true;
-            TextBoxLogger.Name = "TextBoxLogger";
-            TextBoxLogger.ReadOnly = true;
-            TextBoxLogger.ScrollBars = ScrollBars.Both;
-            TextBoxLogger.Size = new Size(1310, 276);
-            TextBoxLogger.TabIndex = 0;
-            TextBoxLogger.WordWrap = false;
-            // 
-            // toolStripSeparator2
-            // 
-            toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new Size(6, 28);
-            // 
-            // toolStripLabel2
-            // 
-            toolStripLabel2.Name = "toolStripLabel2";
-            toolStripLabel2.Size = new Size(184, 25);
-            toolStripLabel2.Text = "Read Timeout Miliseconds";
-            // 
-            // ToolStripTextBoxTimeoutMS
-            // 
-            ToolStripTextBoxTimeoutMS.Name = "ToolStripTextBoxTimeoutMS";
-            ToolStripTextBoxTimeoutMS.Size = new Size(60, 28);
-            ToolStripTextBoxTimeoutMS.Text = "1000";
-            ToolStripTextBoxTimeoutMS.TextBoxTextAlign = HorizontalAlignment.Center;
-            ToolStripTextBoxTimeoutMS.TextChanged += ToolStripTextBoxTimeoutMS_TextChanged;
+            richTextBoxLogger.Dock = DockStyle.Fill;
+            richTextBoxLogger.Location = new Point(0, 0);
+            richTextBoxLogger.Name = "richTextBoxLogger";
+            richTextBoxLogger.Size = new Size(1310, 276);
+            richTextBoxLogger.TabIndex = 0;
+            richTextBoxLogger.Text = "";
             // 
             // FormMain
             // 
@@ -476,7 +473,6 @@
             ToolStripMain.PerformLayout();
             SplitContainer.Panel1.ResumeLayout(false);
             SplitContainer.Panel2.ResumeLayout(false);
-            SplitContainer.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)SplitContainer).EndInit();
             SplitContainer.ResumeLayout(false);
             panel7.ResumeLayout(false);
@@ -508,7 +504,6 @@
         private ToolStripSeparator toolStripSeparator1;
         private ToolStripLabel toolStripLabel1;
         private ToolStripComboBox ToolStripComboBoxDeviceID;
-        private TextBox TextBoxLogger;
         private ToolStripProgressBar ToolStripProgressBarScan;
         private ToolStripStatusLabel toolStripStatusLabelEstimatedTtimeRremaining;
         private Panel panel2;
@@ -536,5 +531,6 @@
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripLabel toolStripLabel2;
         private ToolStripTextBox ToolStripTextBoxTimeoutMS;
+        private RichTextBox richTextBoxLogger;
     }
 }
